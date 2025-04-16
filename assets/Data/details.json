@@ -1,0 +1,59 @@
+{
+  "products": [
+    {
+      "id": "001a",
+      "name": "iPhone 12",
+      "des": "Apple iPhone 12 generation",
+      "bprice": 50000,
+      "sprice": 20000,
+      "color": "Black",
+      "imageurl": "https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcQ8-nVckGMqMBD99uo2EljoNlzLWliQjhaEAxGVk979_rqtPXRL5-5WNRNVNT1XVgwh5Beczra8jZdwhkEickf-uDJA14Y1emJfUtXIfUeK"
+    },
+    {
+      "id": "002b",
+      "name": "boAt Nirvana Ion TWS",
+      "des": "boAt Nirvana Ion TWS Earbuds with 120 HRS Playback",
+      "bprice": 2000,
+      "sprice": 1000,
+      "color": "Black",
+      "imageurl": "https://www.boat-lifestyle.com/cdn/shop/files/NION-ANC-FI_White01_600x.png?v=1702893834"
+    },
+    {
+      "id": "003b",
+      "name": "Bewakoof T-shirt",
+      "des": "L-Size",
+      "bprice": 800,
+      "sprice": 100,
+      "color": "Black",
+      "imageurl": "https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcQXC1yxDY-qQeOfPr3mYgd1jMtkYWmVZ_fErm6bogqoKf0pwoXcHRwXAn8MyyBfx-mKqJJJ2-8IGzuPMDexyjL4b0Nhzc_1W9tT7rpUZnQ"
+    },
+    {
+      "id": "004b",
+      "name": "Mechanical Keyword",
+      "des": "Logitech",
+      "bprice": 11000,
+      "sprice": 5000,
+      "color": "Black",
+      "imageurl": "https://resource.logitech.com/w_692,c_lpad,ar_4:3,q_auto,f_auto,dpr_2.0/d_transparent.gif/content/dam/logitech/en/products/keyboards/mx-mechanical/migration-assets-for-delorean-2025/gallery/mx-mechanical-top-view-graphite-us.png?v=1"
+    },
+    {
+      "id": "005b",
+      "name": "IPL Ticket",
+      "des": "MI vs RCB Ticket",
+      "bprice": 4500,
+      "sprice": 45000,
+      "color": "Black",
+      "imageurl": "https://d16f573ilcot6q.cloudfront.net/wp-content/uploads/2024/02/IPL-Tickets.jpg"
+    },
+    {
+      "id": "006b",
+      "name": "IPL Ticket",
+      "des": "MI vs RCB Ticket",
+      "bprice": 4500,
+      "sprice": 45000,
+      "color": "Black",
+      "imageurl": "https://d16f573ilcot6q.cloudfront.net/wp-content/uploads/2024/02/IPL-Tickets.jpg"
+    }
+
+  ]
+}

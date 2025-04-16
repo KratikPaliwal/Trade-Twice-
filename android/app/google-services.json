@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "322651006056",
+    "project_id": "trade-twice",
+    "storage_bucket": "trade-twice.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:322651006056:android:5043b030ec76ce1ab987dd",
+        "android_client_info": {
+          "package_name": "com.example.trade_twice"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5pmD31NwLuDs8QdN46u8lAzQxoPPwCt4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
