@@ -17,12 +17,14 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   String _name = '';
   String _email = '';
+  String _phone = '';
   String _profileUrl = '';
   bool _isEditing = false;
   bool _isLoading = true;
   bool _isUploading = false;
 
   final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -33,53 +35,54 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadUserData() async {
-    setState(() {
-      _isLoading = true;
-    });
-
     try {
       final user = _auth.currentUser;
-      if (user != null) {
-        final doc = await _firestore.collection('users').doc(user.uid).get();
-        if (doc.exists) {
-          final data = doc.data();
-          if (data != null) {
-            setState(() {
-              _name = data['name'] ?? '';
-              _email = user.email ?? '';
-              _profileUrl = data['profileUrl'] ?? '';
-              _nameController.text = _name;
-            });
-          }
-        } else {
-          await _firestore.collection('users').doc(user.uid).set({
-            'name': user.displayName ?? '',
-            'email': user.email ?? '',
-            'profileUrl': '',
-          });
+      if (user == null) {
+        throw Exception("User not found");
+      }
 
-          setState(() {
-            _name = user.displayName ?? '';
-            _email = user.email ?? '';
-            _nameController.text = _name;
-          });
-        }
+      final docRef = _firestore.collection('users').doc(user.uid);
+      final doc = await docRef.get();
+
+      if (!doc.exists) {
+        // Create new user profile if doesn't exist
+        await docRef.set({
+          'name': user.displayName ?? '',
+          'email': user.email ?? '',
+          'phone': '',
+          'profileUrl': '',
+        });
+      }
+
+      final updatedDoc = await docRef.get();
+      final data = updatedDoc.data();
+
+      if (mounted && data != null) {
+        setState(() {
+          _name = data['name'] ?? '';
+          _email = user.email ?? '';
+          _phone = data['phone'] ?? '';
+          _profileUrl = data['profileUrl'] ?? '';
+          _nameController.text = _name;
+          _phoneController.text = _phone;
+          _isLoading = false; // ✅ Move here to guarantee the loader stops
+        });
+      } else {
+        if (mounted) setState(() => _isLoading = false);
       }
     } catch (e) {
       debugPrint("Error loading user data: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to load profile: ${e.toString().substring(0, 100)}")),
-      );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error loading profile: ${e.toString()}")),
+        );
+      }
     }
   }
 
   Future<void> _pickAndUploadImage() async {
     final picker = ImagePicker();
-
     try {
       final pickedFile = await picker.pickImage(
         source: ImageSource.gallery,
@@ -88,15 +91,11 @@ class _ProfilePageState extends State<ProfilePage> {
       );
 
       if (pickedFile != null) {
-        setState(() {
-          _isUploading = true;
-        });
-
+        setState(() => _isUploading = true);
         final file = File(pickedFile.path);
-        final bytes = await file.readAsBytes();
-        final base64Image = base64Encode(bytes);
+        final base64Image = base64Encode(await file.readAsBytes());
 
-        const apiKey = '201ade4fc5fa5b05181c7f269517c8eb'; // ← Replace this with your actual ImgBB API key
+        const apiKey = '201ade4fc5fa5b05181c7f269517c8eb';
 
         final response = await http.post(
           Uri.parse("https://api.imgbb.com/1/upload?key=$apiKey"),
@@ -107,45 +106,51 @@ class _ProfilePageState extends State<ProfilePage> {
         );
 
         final data = jsonDecode(response.body);
-
         if (data['success']) {
-          String imageUrl = data['data']['url'];
-
+          final imageUrl = data['data']['url'];
           final user = _auth.currentUser;
           if (user != null) {
             await _firestore.collection('users').doc(user.uid).update({
               'profileUrl': imageUrl,
             });
-
-            setState(() {
-              _profileUrl = imageUrl;
-              _isUploading = false;
-            });
-
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Profile image updated successfully!")),
-            );
+            if (mounted) {
+              setState(() {
+                _profileUrl = imageUrl;
+                _isUploading = false;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Profile image updated successfully!")),
+              );
+            }
           }
         } else {
           throw Exception("Image upload failed");
         }
       }
     } catch (e) {
-      setState(() {
-        _isUploading = false;
-      });
-
-      debugPrint("Image upload error: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Image upload failed: ${e.toString().substring(0, 100)}")),
-      );
+      if (mounted) {
+        setState(() => _isUploading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Image upload failed: ${e.toString()}")),
+        );
+      }
     }
   }
 
   Future<void> _updateProfile() async {
-    if (_nameController.text.trim().isEmpty) {
+    final name = _nameController.text.trim();
+    final phone = _phoneController.text.trim();
+
+    if (name.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Name cannot be empty")),
+      );
+      return;
+    }
+
+    if (phone.isNotEmpty && !RegExp(r'^\d{10}$').hasMatch(phone)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Enter a valid 10-digit phone number")),
       );
       return;
     }
@@ -153,35 +158,31 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       final user = _auth.currentUser;
       if (user != null) {
-        setState(() {
-          _isLoading = true;
-        });
-
+        setState(() => _isLoading = true);
         await _firestore.collection('users').doc(user.uid).update({
-          'name': _nameController.text.trim(),
+          'name': name,
+          'phone': phone,
         });
 
-        setState(() {
-          _name = _nameController.text.trim();
-          _isEditing = false;
-          _isLoading = false;
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Profile updated successfully!")),
-        );
-
-        _loadUserData();
+        if (mounted) {
+          setState(() {
+            _name = name;
+            _phone = phone;
+            _isEditing = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Profile updated successfully!")),
+          );
+        }
+        await _loadUserData();
       }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-
-      debugPrint("Error updating profile: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to update profile: ${e.toString().substring(0, 100)}")),
-      );
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to update profile: ${e.toString()}")),
+        );
+      }
     }
   }
 
@@ -194,7 +195,6 @@ class _ProfilePageState extends State<ProfilePage> {
           : SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
             Stack(
               alignment: Alignment.center,
@@ -224,23 +224,10 @@ class _ProfilePageState extends State<ProfilePage> {
               ],
             ),
             const SizedBox(height: 10),
-            Text(
-              _profileUrl.isEmpty ? "No profile image" : "Image URL loaded",
-              style: const TextStyle(color: Colors.grey),
-            ),
-            const SizedBox(height: 10),
-            _isEditing
-                ? ElevatedButton.icon(
+            ElevatedButton.icon(
               onPressed: _isUploading ? null : _pickAndUploadImage,
               icon: const Icon(Icons.image),
-              label: _isUploading
-                  ? const Text("Uploading...")
-                  : const Text("Upload Profile Image"),
-            )
-                : ElevatedButton.icon(
-              onPressed: _isUploading ? null : _pickAndUploadImage,
-              icon: const Icon(Icons.photo_camera),
-              label: const Text("Change Profile Image"),
+              label: Text(_isUploading ? "Uploading..." : "Upload Profile Image"),
             ),
             const SizedBox(height: 20),
             _isEditing
@@ -249,6 +236,12 @@ class _ProfilePageState extends State<ProfilePage> {
                 TextField(
                   controller: _nameController,
                   decoration: const InputDecoration(labelText: 'Name'),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(labelText: 'Phone Number'),
                 ),
                 const SizedBox(height: 20),
                 Row(
@@ -259,6 +252,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         setState(() {
                           _isEditing = false;
                           _nameController.text = _name;
+                          _phoneController.text = _phone;
                         });
                       },
                       style: ElevatedButton.styleFrom(
@@ -280,12 +274,15 @@ class _ProfilePageState extends State<ProfilePage> {
                 Text("Name: $_name", style: const TextStyle(fontSize: 18)),
                 const SizedBox(height: 10),
                 Text("Email: $_email", style: const TextStyle(fontSize: 18)),
+                const SizedBox(height: 10),
+                Text(
+                  "Phone: ${_phone.isNotEmpty ? _phone : "Not added"}",
+                  style: const TextStyle(fontSize: 18),
+                ),
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    setState(() {
-                      _isEditing = true;
-                    });
+                    setState(() => _isEditing = true);
                   },
                   child: const Text("Edit Profile"),
                 ),
@@ -296,11 +293,13 @@ class _ProfilePageState extends State<ProfilePage> {
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               onPressed: () async {
                 await _auth.signOut();
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  MyRoutes.loginroute,
-                      (route) => false,
-                );
+                if (mounted) {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    MyRoutes.loginroute,
+                        (route) => false,
+                  );
+                }
               },
               child: const Text("Logout"),
             ),
@@ -313,6 +312,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void dispose() {
     _nameController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 }

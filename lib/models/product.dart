@@ -1,51 +1,53 @@
-import 'package:flutter/foundation.dart';
-
-class Trade {
-  static List<Items> items = [];
-}
-
-
 class Items {
-final String id;
-final String name;
-final String des;
-final num bprice;
-final num sprice;
-final String color;
-final String imageurl;
+  final String name;
+  final String des;
+  final int bprice;
+  final int sprice;
+  final String imageurl;
+  final String id;
 
-Items({
-required this.id,
-required this.name,
-required this.des,
-required this.bprice,
-required this.sprice,
-required this.color,
-required this.imageurl,
-});
+  Items({
+    required this.name,
+    required this.des,
+    required this.bprice,
+    required this.sprice,
+    required this.imageurl,
+    required this.id, required color,
+  });
 
-factory Items.fromMap(Map<String, dynamic> map) {
-  return Items(
-    id: map['id'],
-    name: map['name'],
-    des: map['des'],
-    bprice: map['bprice'],
-    sprice: map['sprice'],
-    color: map['color'],
-    imageurl: map['imageurl'],
-  );
-}
+  // Factory constructor from Firebase document
+  factory Items.fromMap(Map<String, dynamic> map, String id) {
+    return Items(
+      name: map['name'] ?? '',
+      des: map['des'] ?? '',
+      bprice: map['bprice'] ?? 0,
+      sprice: map['sprice'] ?? 0,
+      imageurl: map['imageurl'] ?? '',
+      id: id, color: null,
+    );
+  }
 
-toMap() => {
-  'id': id,
-  'name': name,
-  'des': des,
-  'bprice': bprice,
-  'sprice': sprice,
-  'color': color,
-  'imageurl': imageurl,
-};
+  // JSON serializer for storing locally
+  factory Items.fromJson(Map<String, dynamic> json) {
+    return Items(
+      name: json['name'] ?? '',
+      des: json['des'] ?? '',
+      bprice: json['bprice'] ?? 0,
+      sprice: json['sprice'] ?? 0,
+      imageurl: json['imageurl'] ?? '',
+      id: json['id'] ?? '', color: null,
+    );
+  }
 
-
-
+  // JSON serializer for storing locally
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'des': des,
+      'bprice': bprice,
+      'sprice': sprice,
+      'imageurl': imageurl,
+      'id': id,
+    };
+  }
 }

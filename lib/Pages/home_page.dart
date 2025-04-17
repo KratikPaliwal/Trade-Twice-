@@ -4,6 +4,8 @@ import 'package:trade_twice/models/product.dart';
 import 'package:trade_twice/widgets/items_widget.dart';
 import 'package:trade_twice/widgets/drawer.dart';
 import 'package:trade_twice/utils/routes.dart';
+import 'package:trade_twice/Pages/order_page.dart';
+import 'package:trade_twice/Pages/cart_services.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -26,6 +28,52 @@ class _HomePageState extends State<HomePage> {
         ),
         backgroundColor: Colors.white,
         centerTitle: true,
+        actions: [
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.shopping_cart),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const OrderPage()),
+                  );
+                },
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: ValueListenableBuilder<List<Items>>(
+                  valueListenable: CartService.instance.cartItems,
+                  builder: (context, cartItems, child) {
+                    return cartItems.isEmpty
+                        ? const SizedBox.shrink()
+                        : Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        '${cartItems.length}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
